@@ -556,9 +556,9 @@ msgstr "Промокод відкликаний"
 
 #: olgram/commands/promo.py:70
 msgid ""
-"Укажите аргумент: промокод. Например: <pre>/set_promo my-promo-code</pre>"
+"Укажите аргумент: промокод. Например: <pre>/setpromo my-promo-code</pre>"
 msgstr ""
-"Зазначте аргумент: промокод. Наприклад: <pre>/set_promo my-promo-code</pre>"
+"Зазначте аргумент: промокод. Наприклад: <pre>/setpromo my-promo-code</pre>"
 
 #: olgram/commands/promo.py:78 olgram/commands/promo.py:82
 msgid "Промокод не найден"

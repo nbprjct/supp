@@ -60,14 +60,14 @@ async def del_promo(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(commands=["setpromo"], state="*")
-async def set_promo(message: types.Message, state: FSMContext):
+async def setpromo(message: types.Message, state: FSMContext):
     """
     Команда /setpromo
     """
 
     arg = message.get_args()
     if not arg:
-        return await message.answer(_("Укажите аргумент: промокод. Например: <pre>/set_promo my-promo-code</pre>"),
+        return await message.answer(_("Укажите аргумент: промокод. Например: <pre>/setpromo my-promo-code</pre>"),
                                     parse_mode="HTML")
 
     arg = arg.strip()

@@ -319,7 +319,8 @@ class CustomRequestHandler(WebhookRequestHandler):
                               types.ContentType.PHOTO,
                               types.ContentType.STICKER,
                               types.ContentType.VIDEO,
-                              types.ContentType.VOICE]
+                              types.ContentType.VOICE,
+                              types.ContentType.LOCATION]
         dp.register_message_handler(message_handler, content_types=supported_messages)
         dp.register_edited_message_handler(edited_message_handler, content_types=supported_messages)
 

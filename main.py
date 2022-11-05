@@ -25,7 +25,7 @@ async def init_database():
 
 async def init_olgram():
     from olgram.router import bot, dp
-    dp.setup_middleware(AccessMiddleware(OlgramSettings.admin_id()))
+    dp.setup_middleware(AccessMiddleware(OlgramSettings.admin_ids()))
     from aiogram.types import BotCommand
     await bot.set_my_commands(
         [

@@ -549,9 +549,9 @@ msgstr "Promotion code withdrawn"
 
 #: olgram/commands/promo.py:70
 msgid ""
-"Укажите аргумент: промокод. Например: <pre>/set_promo my-promo-code</pre>"
+"Укажите аргумент: промокод. Например: <pre>/setpromo my-promo-code</pre>"
 msgstr ""
-"Specify the argument: promo code. For example: <pre>/set_promo my-promo-"
+"Specify the argument: promo code. For example: <pre>/setpromo my-promo-"
 "code</pre>"
 
 #: olgram/commands/promo.py:78 olgram/commands/promo.py:82
