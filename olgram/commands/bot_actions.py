@@ -1,10 +1,12 @@
 """
 Здесь работа с конкретным ботом
 """
+from asyncio import sleep
 from aiogram import types
-from aiogram.utils.exceptions import TelegramAPIError, Unauthorized
+from aiogram.utils.exceptions import TelegramAPIError, Unauthorized, BotKicked, BotBlocked
 from aiogram import Bot as AioBot
 from olgram.models.models import Bot
+from olgram.utils.mix import send_stored_message
 from server.server import unregister_token
 from locales.locale import _
 
@@ -111,3 +113,22 @@ async def antiflood(bot: Bot, call: types.CallbackQuery):
 async def mailing(bot: Bot, call: types.CallbackQuery):
     bot.enable_mailing = not bot.enable_mailing
     await bot.save(update_fields=["enable_mailing"])
+
+
+async def go_mailing(bot: Bot, context) -> int:
+    users = await bot.mailing_users
+    a_bot = AioBot(bot.decrypted_token())
+
+    sended = 0
+
+    for user in users:
+        try:
+            await sleep(0.2)
+            await send_stored_message(context, a_bot, user.telegram_id)
+            sended += 1
+        except TelegramAPIError:
+            # TODO:
+            # delete user
+            # check error source, check bot, break if bot deleted
+            continue
+    return sended
