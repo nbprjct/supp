@@ -420,15 +420,10 @@ async def mailing_text_received(message: types.Message, state: FSMContext):
 
         _message_id = await send_stored_message(proxy, AioBot.get_current(), message.chat.id)
 
-    keyboard = types.InlineKeyboardMarkup(row_width=2)
-    keyboard.insert(
-        types.InlineKeyboardButton(text=_("<< Нет, отменить"),  # TODO: don't move menu back
-                                   callback_data=menu_callback.new(level=1, bot_id=bot_id, operation=empty,
-                                                                   chat=empty))
-    )
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
     keyboard.insert(
         types.InlineKeyboardButton(text=_("Да, начать рассылку"),
-                                   callback_data=menu_callback.new(level=2, bot_id=bot_id, operation="go_go_mailing",
+                                   callback_data=menu_callback.new(level=3, bot_id=bot_id, operation="go_go_mailing",
                                                                    chat=empty))
     )
 
@@ -508,20 +503,15 @@ async def callback(call: types.CallbackQuery, callback_data: dict, state: FSMCon
             return await send_bot_statistic_menu(bot, call)
         if operation == "settings":
             return await send_bot_settings_menu(bot, call)
-        if operation in ("go_mailing", "go_go_mailing"):
+        if operation == "go_mailing":
             if bot.last_mailing_at and bot.last_mailing_at >= datetime.now() - timedelta(minutes=5):
                 return await call.answer(_("Рассылка была совсем недавно, подождите немного"), show_alert=True)
-        if operation == "go_mailing":
+            if not await bot.mailing_users:
+                return await call.answer(_("Нет пользователей для рассылки"))
             await state.set_state("wait_mailing_text")
             async with state.proxy() as proxy:
                 proxy["bot_id"] = bot.id
             return await send_bot_mailing_menu(bot, call)
-        if operation == "go_go_mailing":
-            async with state.proxy() as proxy:
-                mailing_data = dict(proxy)
-            await state.reset_state()  # TODO: double-click protection
-            await call.answer(_("Рассылка запущена"))
-            await bot_actions.go_mailing(bot, mailing_data)
         if operation == "text":
             await state.set_state("wait_start_text")
             async with state.proxy() as proxy:
@@ -556,6 +546,20 @@ async def callback(call: types.CallbackQuery, callback_data: dict, state: FSMCon
             async with state.proxy() as proxy:
                 proxy["bot_id"] = bot.id
             return await send_bot_second_text_menu(bot, call)
+        if operation == "go_go_mailing":
+            if (await state.get_state()) == "wait_mailing_text":
+                async with state.proxy() as proxy:
+                    mailing_data = dict(proxy)
+                await state.reset_state()
+
+                if bot.last_mailing_at and bot.last_mailing_at >= datetime.now() - timedelta(minutes=5):
+                    return await call.answer(_("Рассылка была совсем недавно, подождите немного"), show_alert=True)
+                if not await bot.mailing_users:
+                    return await call.answer(_("Нет пользователей для рассылки"))
+
+                await call.answer(_("Рассылка запущена"))
+                count = await bot_actions.go_mailing(bot, mailing_data)
+                await call.message.answer(_("Рассылка завершена, отправлено {0} сообщений").format(count))
         if operation == "reset_second_text":
             await bot_actions.reset_bot_second_text(bot, call)
             return await send_bot_second_text_menu(bot, call)

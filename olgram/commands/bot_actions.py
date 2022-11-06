@@ -2,8 +2,9 @@
 Здесь работа с конкретным ботом
 """
 from asyncio import sleep
+from datetime import datetime
 from aiogram import types
-from aiogram.utils.exceptions import TelegramAPIError, Unauthorized, BotKicked, BotBlocked
+from aiogram.utils import exceptions
 from aiogram import Bot as AioBot
 from olgram.models.models import Bot
 from olgram.utils.mix import send_stored_message
@@ -17,14 +18,14 @@ async def delete_bot(bot: Bot, call: types.CallbackQuery):
     """
     try:
         await unregister_token(bot.decrypted_token())
-    except Unauthorized:
+    except exceptions.Unauthorized:
         # Вероятно пользователь сбросил токен или удалил бот, это уже не наши проблемы
         pass
     await bot.delete()
     await call.answer(_("Бот удалён"))
     try:
         await call.message.delete()
-    except TelegramAPIError:
+    except exceptions.TelegramAPIError:
         pass
 
 
@@ -74,7 +75,7 @@ async def select_chat(bot: Bot, call: types.CallbackQuery, chat: str):
             try:
                 await chat.delete()
                 await a_bot.leave_chat(chat.chat_id)
-            except TelegramAPIError:
+            except exceptions.TelegramAPIError:
                 pass
         await call.answer(_("Бот вышел из чатов"))
         await a_bot.session.close()
@@ -119,16 +120,24 @@ async def go_mailing(bot: Bot, context) -> int:
     users = await bot.mailing_users
     a_bot = AioBot(bot.decrypted_token())
 
-    sended = 0
+    count = 0
+
+    print(f"start mailing {context}")
 
     for user in users:
+        bot.last_mailing_at = datetime.now()
+        await bot.save(update_fields=["last_mailing_at"])
         try:
-            await sleep(0.2)
-            await send_stored_message(context, a_bot, user.telegram_id)
-            sended += 1
-        except TelegramAPIError:
-            # TODO:
-            # delete user
-            # check error source, check bot, break if bot deleted
-            continue
-    return sended
+            await sleep(0.05)
+            try:
+                await send_stored_message(context, a_bot, user.telegram_id)
+            except exceptions.RetryAfter as err:
+                await sleep(err.timeout)
+                await send_stored_message(context, a_bot, user.telegram_id)
+            count += 1
+        except (exceptions.ChatNotFound, exceptions.BotBlocked, exceptions.UserDeactivated):
+            await user.delete()
+        except exceptions.TelegramAPIError:
+            pass
+
+    return count
