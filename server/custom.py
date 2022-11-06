@@ -11,7 +11,7 @@ from tortoise.expressions import F
 import logging
 import typing as ty
 from olgram.settings import ServerSettings
-from olgram.models.models import Bot, GroupChat, BannedUser
+from olgram.models.models import Bot, GroupChat, BannedUser, MailingUser
 from locales.locale import _, translators
 from server.inlines import inline_handler
 
@@ -55,15 +55,20 @@ def _on_security_policy(message: types.Message, bot):
     text = _("<b>Политика конфиденциальности</b>\n\n"
              "Этот бот не хранит ваши сообщения, имя пользователя и @username. При отправке сообщения (кроме команд "
              "/start и /security_policy) ваш идентификатор пользователя записывается в кеш на некоторое время и потом "
-             "удаляется из кеша. Этот идентификатор используется только для общения с оператором; боты Olgram "
-             "не делают массовых рассылок.\n\n")
+             "удаляется из кеша. Этот идентификатор используется для общения с оператором.\n\n")
     if bot.enable_additional_info:
         text += _("При отправке сообщения (кроме команд /start и /security_policy) оператор <b>видит</b> ваши имя "
                   "пользователя, @username и идентификатор пользователя в силу настроек, которые оператор указал при "
-                  "создании бота.")
+                  "создании бота.\n\n")
     else:
         text += _("В зависимости от ваших настроек конфиденциальности Telegram, оператор может видеть ваш username, "
-                  "имя пользователя и другую информацию.")
+                  "имя пользователя и другую информацию.\n\n")
+
+    if bot.enable_mailing:
+        text += _("В этом боте включена массовая рассылка в силу настроек, которые оператор указал при создании бота. "
+                  "Ваш идентификатор пользователя может быть записан в базу данных на долгое время")
+    else:
+        text += _("В этом боте нет массовой рассылки сообщений")
 
     return SendMessage(chat_id=message.chat.id,
                        text=text,
@@ -127,6 +132,10 @@ async def handle_user_message(message: types.Message, super_chat_id: int, bot):
     """Обычный пользователь прислал сообщение в бот, нужно переслать его операторам"""
     _ = _get_translator(message)
     is_super_group = super_chat_id < 0
+
+    # Записать пользователя для рассылки, если она включена
+    if bot.enable_mailing:
+        _, __ = await MailingUser.get_or_create(telegram_id=message.chat.id, bot=bot)
 
     # Проверить, не забанен ли пользователь
     banned = await bot.banned_users.filter(telegram_id=message.chat.id)

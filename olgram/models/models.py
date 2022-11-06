@@ -46,6 +46,8 @@ class Bot(Model):
     enable_additional_info = fields.BooleanField(default=False)
     enable_olgram_text = fields.BooleanField(default=True)
     enable_antiflood = fields.BooleanField(default=False)
+    enable_mailing = fields.BooleanField(default=False)
+    last_mailing_at = fields.DatetimeField(null=True, default=None)
 
     def decrypted_token(self):
         cryptor = DatabaseSettings.cryptor()
@@ -68,6 +70,17 @@ class Bot(Model):
 
     class Meta:
         table = 'bot'
+
+
+class MailingUser(Model):
+    id = fields.BigIntField(pk=True)
+    telegram_id = fields.BigIntField(index=True)
+
+    bot = fields.ForeignKeyField("models.Bot", related_name="mailing_users", on_delete=fields.relational.CASCADE)
+
+    class Meta:
+        table = 'mailinguser'
+        unique_together = (("bot", "telegram_id"), )
 
 
 class User(Model):
