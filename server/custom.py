@@ -219,9 +219,9 @@ async def message_handler(message: types.Message, *args, **kwargs):
     if message.text and message.text == "/start":
         # На команду start нужно ответить, не пересылая сообщение никуда
         text = bot.start_text
-        if bot.enable_olgram_text:
-            text += _(ServerSettings.append_text())
-        return SendMessage(chat_id=message.chat.id, text=text, parse_mode="HTML")
+        #if bot.enable_olgram_text:
+            #text += _(ServerSettings.append_text())
+        #return SendMessage(chat_id=message.chat.id, text=text, parse_mode="HTML")
 
     if message.text and message.text == "/security_policy":
         # На команду security_policy нужно ответить, не пересылая сообщение никуда
